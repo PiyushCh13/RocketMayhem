@@ -50,6 +50,9 @@ public class SpaceshipController : MonoBehaviour
     [Header("Managers")]
     GameManager gameManager;
     UIManager uiManager;
+    public float rightThreshold;
+    public float downThreshold;
+    public float upThreshold;
 
     // Start is called before the first frame update
     void Start()
@@ -131,8 +134,8 @@ public class SpaceshipController : MonoBehaviour
         }
 #endif
         Vector2 moveVector = new Vector2(xSpeed, ySpeed);
-        rb.velocity = moveVector * (SPEED_OFFSET * Time.deltaTime);
-        transform.right = rb.velocity;
+        rb.linearVelocity = moveVector * (SPEED_OFFSET * Time.deltaTime);
+        transform.right = rb.linearVelocity;
     }
 
     void ClampPlayerPosition()
@@ -155,39 +158,44 @@ public class SpaceshipController : MonoBehaviour
     }
 
     void RaycastBasedCollision()
+{
+    RaycastHit2D upRay = Physics2D.Raycast(rayCastObject.transform.position, transform.up, raycastDistance, raycastLayerMask);
+    RaycastHit2D downRay = Physics2D.Raycast(rayCastObject.transform.position, -transform.up, raycastDistance, raycastLayerMask);
+    RaycastHit2D rightRay = Physics2D.Raycast(rayCastObject.transform.position, transform.right, raycastDistance, raycastLayerMask);
+
+    if (upRay.collider != null && upRay.collider.CompareTag("Box"))
     {
-        RaycastHit2D upRay = Physics2D.Raycast(rayCastObject.transform.position, transform.up, raycastDistance, raycastLayerMask);
-        RaycastHit2D downRay = Physics2D.Raycast(rayCastObject.transform.position, -transform.up, raycastDistance, raycastLayerMask);
-        RaycastHit2D rightRay = Physics2D.Raycast(rayCastObject.transform.position, transform.right, raycastDistance, raycastLayerMask);
+        float upDistance = Vector2.Distance(rayCastObject.transform.position, upRay.point);
+        if (upDistance < upThreshold) 
+        {
+            UpdateRotationAtBorders();
+        }
+    }
 
-        float upDistance = Vector2.Distance(transform.position, upRay.point);
-        float downDistance = Vector2.Distance(transform.position, downRay.point);
+    if (downRay.collider != null && downRay.collider.CompareTag("Box"))
+    {
+        float downDistance = Vector2.Distance(rayCastObject.transform.position, downRay.point);
+        if (downDistance < downThreshold)
+        {
+            UpdateRotationAtBorders();
+        }
+    }
+
+    if (rightRay.collider != null && rightRay.collider.CompareTag("Box"))
+    {
         float rightDistance = Vector2.Distance(rayCastObject.transform.position, rightRay.point);
-
-
-        if (upRay.collider != null && upRay.collider.CompareTag("Box"))
+        if (rightDistance < rightThreshold)
         {
-            if (upDistance < 0.75f)
-            {
-                UpdateRotationAtBorders();
-            }
-        }
-
-        if (downRay.collider != null && downRay.collider.CompareTag("Box"))
-        {
-            if (downDistance < 0.75f)
-            {
-                UpdateRotationAtBorders();
-            }
-        }
-
-        if (rightRay.collider != null && rightRay.collider.CompareTag("Box"))
-        {
-            if (rightDistance < 0.1f)
-            {
-                gameManager.OnGameOver();
-                Destroy(this.gameObject);
-            }
+            gameManager.OnGameOver();
+            DestroySelf();
         }
     }
 }
+
+void DestroySelf()
+{
+    Destroy(gameObject);
+}
+
+}
+

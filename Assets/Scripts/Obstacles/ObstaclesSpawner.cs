@@ -6,10 +6,12 @@ public class ObstaclesSpawner : MonoBehaviour
 {
     [Header("Obstacles")]
     [SerializeField] List<GameObject> Obstacles = new List<GameObject>();
+    [SerializeField] float spacing = 3f;
+
     float cameraRight;
     float cameraLeft;
-    [SerializeField] float spacing;
     Vector3 nextSpawnPos;
+
     int ObstaclesCurrentIndex = 0;
     int ObstaclesPreviousIndex = 0;
 
@@ -18,9 +20,13 @@ public class ObstaclesSpawner : MonoBehaviour
 
     [Header("Manager")]
     GameManager gameManager;
+
     void Start()
     {
         gameManager = GameManager.Instance;
+
+        cameraRight = HelperClass.GetCameraRight(Camera.main);
+        cameraLeft = HelperClass.GetCameraLeft(Camera.main);
 
         ObstaclesCurrentIndex = Random.Range(0, Obstacles.Count);
         ObstaclesPreviousIndex = ObstaclesCurrentIndex;
@@ -28,53 +34,53 @@ public class ObstaclesSpawner : MonoBehaviour
         currentObs = Obstacles[ObstaclesCurrentIndex].transform;
         prevObs = currentObs;
 
-        cameraRight = HelperClass.GetCameraRight(Camera.main);
-        cameraLeft = HelperClass.GetCameraLeft(Camera.main);
-
-        nextSpawnPos = new Vector3(19f, 5f, 0f);
+        nextSpawnPos = new Vector3(cameraRight + spacing, 5f, 0f);
 
         SetPosition(currentObs.gameObject, nextSpawnPos);
 
-
+        StartCoroutine(SpawnObstacles());
     }
 
-    // Update is called once per frame
-    void Update()
+    IEnumerator SpawnObstacles()
     {
-        InstantiateEasy();
-    }
-
-    public void InstantiateEasy() 
-    {
-        cameraRight = HelperClass.GetCameraRight(Camera.main);
-        cameraLeft = HelperClass.GetCameraLeft(Camera.main);
-
-        float maxExtentCurrent = currentObs.GetComponent<BoxCollider2D>().bounds.max.x;
-
-        if ( maxExtentCurrent < cameraRight) 
+        while (true)
         {
-            ObstaclesPreviousIndex = ObstaclesCurrentIndex;
+            yield return new WaitForSeconds(0.1f);
 
-            prevObs = currentObs;
+            cameraRight = HelperClass.GetCameraRight(Camera.main);
+            cameraLeft = HelperClass.GetCameraLeft(Camera.main);
 
-            ObstaclesCurrentIndex = Random.Range(0, Obstacles.Count);
+            float maxExtentCurrent = currentObs.GetComponent<BoxCollider2D>().bounds.max.x;
 
-            if(ObstaclesCurrentIndex == ObstaclesPreviousIndex) 
+            if (maxExtentCurrent < cameraRight)
             {
-                ObstaclesCurrentIndex = (ObstaclesPreviousIndex + 1) % Obstacles.Count;
+                SpawnNewObstacle();
             }
 
-            currentObs = Obstacles[ObstaclesCurrentIndex].transform;
-            nextSpawnPos = new Vector3(cameraRight + spacing, 5f, 0f);
-            SetPosition(currentObs.gameObject, nextSpawnPos);
+            float prevMaxExtent = prevObs.GetComponent<BoxCollider2D>().bounds.max.x;
+            if (prevMaxExtent < cameraLeft)
+            {
+                prevObs.gameObject.SetActive(false);
+            }
         }
+    }
 
-        float prevMaxExtent = prevObs.GetComponent<BoxCollider2D>().bounds.max.x;
+    void SpawnNewObstacle()
+    {
+        prevObs = currentObs;
+        ObstaclesPreviousIndex = ObstaclesCurrentIndex;
 
-        if(prevMaxExtent < cameraLeft) 
+        do
         {
-            prevObs.gameObject.SetActive(false);
-        }
+            ObstaclesCurrentIndex = Random.Range(0, Obstacles.Count);
+        } while (ObstaclesCurrentIndex == ObstaclesPreviousIndex);
+
+        currentObs = Obstacles[ObstaclesCurrentIndex].transform;
+
+        float lastObstacleWidth = prevObs.GetComponent<BoxCollider2D>().bounds.size.x;
+        nextSpawnPos = new Vector3(prevObs.position.x + lastObstacleWidth + spacing, 5f, 0f);
+
+        SetPosition(currentObs.gameObject, nextSpawnPos);
     }
 
     void SetPosition(GameObject obj, Vector3 position)
