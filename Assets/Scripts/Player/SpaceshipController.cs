@@ -104,8 +104,9 @@ public class SpaceshipController : MonoBehaviour
     {
 
 #if UNITY_ANDROID
-
-        bool isTouch = Input.touchCount > 0 && touch.phase == TouchPhase.Began ? true : false;
+        if(GameManager.Instance.isMobile)
+        {
+           bool isTouch = Input.touchCount > 0 && touch.phase == TouchPhase.Began ? true : false;
 
         if (isTouch)
         {
@@ -117,9 +118,10 @@ public class SpaceshipController : MonoBehaviour
             pitch = Mathf.Lerp(pitch, MIN_PITCH, 0.01f);
             ySpeed -= rotSpeed;
         }
+        }
 #endif
 
-#if UNITY_STANDALONE || UNITY_EDITOR_64
+#if UNITY_STANDALONE || UNITY_EDITOR_64 || UNITY_WEBGL
         bool isButtonPressed = Input.GetMouseButton(0);
 
         if (isButtonPressed)
@@ -158,44 +160,44 @@ public class SpaceshipController : MonoBehaviour
     }
 
     void RaycastBasedCollision()
-{
-    RaycastHit2D upRay = Physics2D.Raycast(rayCastObject.transform.position, transform.up, raycastDistance, raycastLayerMask);
-    RaycastHit2D downRay = Physics2D.Raycast(rayCastObject.transform.position, -transform.up, raycastDistance, raycastLayerMask);
-    RaycastHit2D rightRay = Physics2D.Raycast(rayCastObject.transform.position, transform.right, raycastDistance, raycastLayerMask);
-
-    if (upRay.collider != null && upRay.collider.CompareTag("Box"))
     {
-        float upDistance = Vector2.Distance(rayCastObject.transform.position, upRay.point);
-        if (upDistance < upThreshold) 
+        RaycastHit2D upRay = Physics2D.Raycast(rayCastObject.transform.position, transform.up, raycastDistance, raycastLayerMask);
+        RaycastHit2D downRay = Physics2D.Raycast(rayCastObject.transform.position, -transform.up, raycastDistance, raycastLayerMask);
+        RaycastHit2D rightRay = Physics2D.Raycast(rayCastObject.transform.position, transform.right, raycastDistance, raycastLayerMask);
+
+        if (upRay.collider != null && upRay.collider.CompareTag("Box"))
         {
-            UpdateRotationAtBorders();
+            float upDistance = Vector2.Distance(rayCastObject.transform.position, upRay.point);
+            if (upDistance < upThreshold)
+            {
+                UpdateRotationAtBorders();
+            }
+        }
+
+        if (downRay.collider != null && downRay.collider.CompareTag("Box"))
+        {
+            float downDistance = Vector2.Distance(rayCastObject.transform.position, downRay.point);
+            if (downDistance < downThreshold)
+            {
+                UpdateRotationAtBorders();
+            }
+        }
+
+        if (rightRay.collider != null && rightRay.collider.CompareTag("Box"))
+        {
+            float rightDistance = Vector2.Distance(rayCastObject.transform.position, rightRay.point);
+            if (rightDistance < rightThreshold)
+            {
+                gameManager.OnGameOver();
+                DestroySelf();
+            }
         }
     }
 
-    if (downRay.collider != null && downRay.collider.CompareTag("Box"))
+    void DestroySelf()
     {
-        float downDistance = Vector2.Distance(rayCastObject.transform.position, downRay.point);
-        if (downDistance < downThreshold)
-        {
-            UpdateRotationAtBorders();
-        }
+        Destroy(gameObject);
     }
-
-    if (rightRay.collider != null && rightRay.collider.CompareTag("Box"))
-    {
-        float rightDistance = Vector2.Distance(rayCastObject.transform.position, rightRay.point);
-        if (rightDistance < rightThreshold)
-        {
-            gameManager.OnGameOver();
-            DestroySelf();
-        }
-    }
-}
-
-void DestroySelf()
-{
-    Destroy(gameObject);
-}
 
 }
 

@@ -1,46 +1,40 @@
-using System.Collections;
-using System.IO;
-using System.Collections.Generic;
 using UnityEngine;
 
 public static class SaveLoadSystem
 {
-    public static readonly string SAVE_FOLDER_NONEDITOR = Application.persistentDataPath + "/Saves/";
-
     public static void InitialiseData()
     {
-        bool directoryExists;
-        directoryExists = Directory.Exists(SAVE_FOLDER_NONEDITOR);
-
-        if (!directoryExists)
+        if (!PlayerPrefs.HasKey("HIGH_SCORE"))
         {
-            Directory.CreateDirectory(SAVE_FOLDER_NONEDITOR);
-
             SaveData saveData = new SaveData
             {
                 HIGH_SCORE = 0,
                 SFX_SLIDER = 0.5f,
-                MUSIC_SLIDER = 0.5f,
+                MUSIC_SLIDER = 0.5f
             };
-
-            string json = JsonUtility.ToJson(saveData);
-            SaveData(json);
+            SaveData(saveData);
         }
     }
 
-
-
-    public static void SaveData(string json)
+    public static void SaveData(SaveData data)
     {
-        File.WriteAllText(SAVE_FOLDER_NONEDITOR + "/Save.json", json);
+        PlayerPrefs.SetInt("HIGH_SCORE", data.HIGH_SCORE);
+        PlayerPrefs.SetFloat("SFX_SLIDER", data.SFX_SLIDER);
+        PlayerPrefs.SetFloat("MUSIC_SLIDER", data.MUSIC_SLIDER);
+        PlayerPrefs.Save();
     }
 
-    public static string LoadData()
+    public static SaveData LoadData()
     {
-        if (File.Exists(SAVE_FOLDER_NONEDITOR + "/Save.json"))
+        if (PlayerPrefs.HasKey("HIGH_SCORE"))
         {
-            string savestring = File.ReadAllText(SAVE_FOLDER_NONEDITOR + "/Save.json");
-            return savestring;
+            SaveData data = new SaveData
+            {
+                HIGH_SCORE = PlayerPrefs.GetInt("HIGH_SCORE"),
+                SFX_SLIDER = PlayerPrefs.GetFloat("SFX_SLIDER"),
+                MUSIC_SLIDER = PlayerPrefs.GetFloat("MUSIC_SLIDER")
+            };
+            return data;
         }
         else
         {

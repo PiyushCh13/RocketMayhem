@@ -35,7 +35,7 @@ public class GameManager : Singleton<GameManager>
     SpriteRenderer playerRenderer;
     public Sprite playerSprite;
     public Sprite defaultSprite;
-    public bool hasInstantiatedPlayer ;
+    public bool hasInstantiatedPlayer;
 
     [Header("Gameplay")]
     private float score = 0;
@@ -53,30 +53,30 @@ public class GameManager : Singleton<GameManager>
 
     void Start()
     {
-       SaveLoadSystem.InitialiseData();
+        SaveLoadSystem.InitialiseData();
 
-       currentGameStates = GameStates.inMenu;
+        currentGameStates = GameStates.inMenu;
 
-       hasInstantiatedPlayer = false;
+        hasInstantiatedPlayer = false;
 
-       LoadGame();
+        LoadGame();
     }
 
     void Update()
     {
-        if(spaceShip == null && !hasInstantiatedPlayer) PlayerSpriteChange();
+        if (spaceShip == null && !hasInstantiatedPlayer) PlayerSpriteChange();
     }
 
-    public void PlayerSpriteChange() 
+    public void PlayerSpriteChange()
     {
-        if(SceneManager.GetActiveScene().name == SceneList.GameScene.ToString())
+        if (SceneManager.GetActiveScene().name == SceneList.GameScene.ToString())
         {
             spaceShip = Instantiate(Resources.Load("Spaceship") as GameObject, startPos, Quaternion.identity);
             spaceShip.gameObject.name = "Spaceship";
             playerRenderer = spaceShip.GetComponent<SpriteRenderer>();
             playerRenderer.sprite = playerSprite;
 
-            if(playerSprite == null) 
+            if (playerSprite == null)
             {
                 playerRenderer.sprite = defaultSprite;
             }
@@ -87,7 +87,7 @@ public class GameManager : Singleton<GameManager>
     {
         Scene prevScene = SceneManager.GetActiveScene();
 
-        SceneManager.LoadScene(sceneName,LoadSceneMode.Single);
+        SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
 
         if (prevScene != SceneManager.GetActiveScene() && prevScene != null)
         {
@@ -95,7 +95,7 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
-    public void ResetScoreandTime() 
+    public void ResetScoreandTime()
     {
         Score = 0;
         mins = 0;
@@ -103,47 +103,44 @@ public class GameManager : Singleton<GameManager>
         elapsedTime = 0;
     }
 
-    public void OnGameOver() 
+    public void OnGameOver()
     {
-        if(score > highscore) 
+        if (score > highscore)
         {
             highscore = Mathf.FloorToInt(score);
             GameManager.Instance.SaveGame();
         }
 
         SFXManager.Instance.PlaySound(SFXManager.Instance.explosionSound);
-        Instantiate(explosion_Effect, spaceShip.transform.position , Quaternion.identity);
+        Instantiate(explosion_Effect, spaceShip.transform.position, Quaternion.identity);
         currentGameStates = GameStates.GameOver;
         UIManager.Instance.OpenMenu(Menus.GameOver);
         hasInstantiatedPlayer = true;
         Time.timeScale = 0;
     }
 
-    public void SaveGame() 
+public void SaveGame()
+{
+    SaveData saveData = new SaveData
     {
-        SaveData saveData = new SaveData
-        {
-            HIGH_SCORE = HighScore,
-            SFX_SLIDER = MusicManager.Instance.musicSource.volume,
-            MUSIC_SLIDER = SFXManager.Instance.sfxAudioSource.volume
-        };
+        HIGH_SCORE = HighScore,
+        SFX_SLIDER = MusicManager.Instance.musicSource.volume,
+        MUSIC_SLIDER = SFXManager.Instance.sfxAudioSource.volume
+    };
 
-        string json = JsonUtility.ToJson(saveData);
-        SaveLoadSystem.SaveData(json);
-    }
+    SaveLoadSystem.SaveData(saveData);
+}
 
-    public void LoadGame() 
+
+public void LoadGame()
+{
+    SaveData saveData = SaveLoadSystem.LoadData();
+
+    if (saveData != null)
     {
-        string saveString = SaveLoadSystem.LoadData();
-
-        if (saveString != null)
-        {
-            SaveData savedata = JsonUtility.FromJson<SaveData>(saveString);
-
-            HighScore = savedata.HIGH_SCORE;
-            MusicManager.Instance.musicSource.volume = savedata.MUSIC_SLIDER;
-            SFXManager.Instance.sfxAudioSource.volume = savedata.SFX_SLIDER;
-        }
+        HighScore = saveData.HIGH_SCORE;
+        MusicManager.Instance.musicSource.volume = saveData.MUSIC_SLIDER;
+        SFXManager.Instance.sfxAudioSource.volume = saveData.SFX_SLIDER;
     }
-
+}
 }
